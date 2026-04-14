@@ -19,7 +19,7 @@ public class ExcelUtils {
         List<Map<String, String>> dataList = new ArrayList<>();
 
         try (FileInputStream fis = new FileInputStream(filePath);
-             Workbook workbook = new XSSFWorkbook(fis)) {
+            Workbook workbook = new XSSFWorkbook(fis)) {
 
             Sheet sheet = workbook.getSheet(sheetName);
             if (sheet == null) {
@@ -75,5 +75,18 @@ public class ExcelUtils {
             default:
                 return "";
         }
+    }
+
+    /**
+     * Helper method to convert the String values from the Map back to Integers safely.
+     * Put this here so all logic stays in ExcelUtils.
+     */
+    public static int getNumberValue(Map<String, String> data, String key) {
+        String value = data.get(key);
+        if (value == null) {
+            throw new RuntimeException("The key '" + key + "' was not found in the Excel data. Check for typos/case-sensitivity.");
+        }
+        // Even with formatter, if a user typed a decimal in Excel, we handle it
+        return (int) Double.parseDouble(value);
     }
 }

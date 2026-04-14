@@ -3,6 +3,7 @@ package com.automation.tests;
 import com.automation.driver.DriverFactory;
 import com.automation.pages.*;
 import com.automation.reporting.ExtendReportManager;
+import com.automation.utils.ExcelUtils;
 import com.automation.utils.ScreenshotUtils;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
@@ -12,8 +13,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import java.util.Set;
+
+import java.util.List;
+import java.util.Map;
 
 public class HomePageTest {
 
@@ -25,6 +29,20 @@ public class HomePageTest {
     @BeforeSuite
     public void setUpReport() {
         ExtendReportManager.initializeReport();
+    }
+
+    // DataProvider to read Excel data
+    @DataProvider(name = "hotelData")
+    public Object[][] getHotelData() {
+        String filePath = "src/test/resources/data/HotelTestData.xlsx";
+        String sheetName = "SearchTests";
+        List<Map<String, String>> excelData = ExcelUtils.readExcelData(filePath, sheetName);
+
+        Object[][] data = new Object[excelData.size()][1];
+        for (int i = 0; i < excelData.size(); i++) {
+            data[i][0] = excelData.get(i);
+        }
+        return data;
     }
 
     @BeforeMethod
@@ -42,14 +60,25 @@ public class HomePageTest {
         test.log(Status.INFO, "HomePage loaded successfully");
     }
 
-    @Test
-    public void testSearchHotelName() {
-        String hotelName = "Muong Thanh Saigon Centre Hotel";
-        test.log(Status.INFO, "Starting hotel search and selection");
+    @Test(dataProvider = "hotelData")
+    public void testSearchHotelName(Map<String, String> data) {
+        // Extract data from the Map
+        String hotelName = data.get("HotelName");
+        int startOffset = ExcelUtils.getNumberValue(data, "StartOffSet"); 
+        int endOffset = ExcelUtils.getNumberValue(data, "EndOffSet");
+        int rooms = ExcelUtils.getNumberValue(data, "Rooms");
+        int adults = ExcelUtils.getNumberValue(data, "Adults");
+        int children = ExcelUtils.getNumberValue(data, "Children");
 
+        // Initialize dynamic report for each data row
+        ExtendReportManager.createTest("Search Test: " + hotelName, "Testing search for " + hotelName);
+        test = ExtendReportManager.getTest();
+
+        test.log(Status.INFO, "Starting search for: " + hotelName);
+        
         homePage.searchAndChooseHotel(hotelName);
-        homePage.chooseDate(2, 3, "yyyy-MM-dd");
-        homePage.chooseNumberOfRoomsAndPeople(1, 4, 2);
+        homePage.chooseDate(startOffset, endOffset, "yyyy-MM-dd");
+        homePage.chooseNumberOfRoomsAndPeople(rooms, adults, children);
         homePage.searchHotels();
         cartPage.chooseFirstHotelCardAndVerifyPrice();
     }

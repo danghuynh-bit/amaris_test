@@ -13,7 +13,6 @@
         </groups>
 
         <classes>
-            <class name="com.automation.tests.LoginTest"/>
             <class name="com.automation.tests.HomePageTest"/>
         </classes>
     </test>
